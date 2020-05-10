@@ -129,12 +129,12 @@ class MSdownloader(object):
                         self.obtainBalance()
                         while True:
                             try:
-                                buy = input('Not puchased, buy it? {}/{} ([y]/n)'.format(price, self.balance))
-                                assert buy in ['', 'y', 'n']
+                                buy = input('Not puchased, buy it? {}/{} (y/n)'.format(price, self.balance))
+                                assert buy in ['y', 'n']
                                 break
                             except:
                                 pass
-                        if buy in ['', 'y']:
+                        if buy == 'y':
                             self.purchase(url)
                             self.download(tree, url)
                         else:
