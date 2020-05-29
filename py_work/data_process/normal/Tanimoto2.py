@@ -25,7 +25,7 @@ warnings.filterwarnings('ignore')
 
 
 
-def getSimilarity(data):
+def getSimilarity(data, binary=True):
     """
     
 
@@ -42,7 +42,12 @@ def getSimilarity(data):
     """
     for arr in data:
         up = arr*data #获取两个特征向量的数组，进行相关运算，下同
-        down = arr**2 + data**2
+        
+        if binary:
+            down = arr + data
+        else:
+            down = arr**2 + data**2
+            
         value = up.sum(axis=1)/(down.sum(axis=1)-up.sum(axis=1))#计算公式
         yield value
         
@@ -73,7 +78,7 @@ def main(data):
         
 
 if "__main__" == __name__:
-    data = np.random.randint(0,2,(100,100)) #fake data
+    data = np.random.randint(0,2,(1660,1660)) #fake data
     
     simi = main(data)
 
