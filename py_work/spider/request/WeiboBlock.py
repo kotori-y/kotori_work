@@ -20,8 +20,9 @@ import re
 from PIL import Image
 import random
 from urllib.parse import quote_plus
-import http.cookiejar as cookielib
-
+# import http.cookiejar as cookielib
+import json
+from lxml import etree
 
 agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0'
 headers = {
@@ -34,15 +35,15 @@ class WeiboLogin(object):
     通过登录 weibo.com 然后跳转到 m.weibo.cn
     """
 
-    def __init__(self, user, password, cookie_path):
+    def __init__(self, user, password):
         super(WeiboLogin, self).__init__()
         self.user = user
         self.password = password
         self.session = requests.Session()
-        self.cookie_path = cookie_path
-        self.session.cookies = cookielib.LWPCookieJar(filename=self.cookie_path)
+        # self.cookie_path = cookie_path
+        # self.session.cookies = cookielib.LWPCookieJar(filename=self.cookie_path)
         self.index_url = "http://weibo.com/login.php"
-        self.session.get(self.index_url, headers=headers, timeout=2)
+        self.session.get(self.index_url, headers=headers, timeout=30)
         self.postdata = dict()
 
     def get_su(self):
@@ -223,57 +224,93 @@ class WeiboLogin(object):
         print(login_res)
 
         # 可以通过 session.cookies 对 cookies 进行下一步相关操作
-        self.session.cookies.save()
-
-
-if __name__ == '__main__':
-    import json
-    from lxml import etree
+        # self.session.cookies.save()
     
-    COUNT = 0
-    
-    username = input("Usename: ")  # 用户名
-    password = input("password: ")  # 密码
-    cookie_path = input("Coocike path: ")  # 保存cookie 的文件名称
-    weibo = WeiboLogin(username, password, cookie_path)
-    weibo.login()
-    
-    for page in range(1,1000):
-        comment_url = '**&Page={}'.format(page)
-        
-        response = weibo.session.get(comment_url)
-        html = response.text
-        
-        json.loads(html)
-        html = json.loads(html)
-        html = html['data']['html']
-        html = etree.HTML(html)
-        html.xpath('//*[@class="list_box"]')
-        comment_box = html.xpath('//*[@class="list_ul"]')[0]
-        
+    def blockUID(self, uid, count=1):
         url = 'https://weibo.com/aj/filter/block?ajwvr=6'
         
-        for comment in comment_box.xpath('div')[1:-1]:
-            uid = comment.xpath('*[@class="WB_face W_fl"]/a/img/@usercard')[0][3:]
-            # print(uid)
-            weibo.session.headers["Referer"] = 'http://weibo.com/u/{}'.format(uid)
-            data = {"uid": uid,
-                    "filter_type": "1",
-                    "status": "1",
-                    "interact": "1",
-                    "follow": "1"} 
-            response = weibo.session.post(url, data=data)
-            html = response.text
-            html = json.loads(html)
-            msg = html['msg']
-            
-            COUNT += 1
-            
-            print('No.{:5s}: {} {}'.format(str(COUNT), uid, msg))
-            
-            time.sleep(0.5)
-            
-        if COUNT >= 5000:
-            break
+        self.session.headers["Referer"] = 'http://weibo.com/u/{}'.format(uid)
         
+        data = {"uid": uid,
+                "filter_type": "1",
+                "status": "1",
+                "interact": "1",
+                "follow": "1"} 
+        response = self.session.post(url, data=data)
+        html = response.text
+        html = json.loads(html)
+        msg = html['msg']
+                
+        print('No.{:5s}: {} {}'.format(str(count), uid, msg))
+        
+        time.sleep(0.5)
+            
+    
+    def main(self, url):
+        response = self.session.get(url)
+        mid = re.findall('do=mblog&act=(\d+)', response.text)[0]
+        print(mid)
+        COUNT = 1
+        
+        for page in range(1,100):
+            comment_url = 'https://weibo.com/aj/v6/comment/big?ajwvr=6&id={}&from=singleWeiBo&page={}'.format(mid, page)
+            
+            response = self.session.get(comment_url)
+            time.sleep(5)
+            html = response.text
+        
+            json.loads(html)
+            html = json.loads(html)
+            html = html['data']['html']
+            nums = re.findall('共(.*)条回复', html)
+            
+            html = etree.HTML(html)
+            html.xpath('//*[@class="list_box"]')
+            comment_box = html.xpath('//*[@class="list_ul"]')[0]    
+            
+            
+            for comment,num in zip(comment_box.xpath('div')[:-1], nums):
+                num = int(num)
+                comment_id = comment.xpath('@comment_id')[0]
+                
+                uid = comment.xpath('*[@class="WB_face W_fl"]/a/img/@usercard')[0][3:]
+                self.blockUID(uid, COUNT)
+                COUNT += 1
+                
+                n = 0
+                p = 1
+                while n < num:
+                    level2 = "https://weibo.com/aj/v6/comment/big?ajwvr=6&more_comment=big&root_comment_id={}&is_child_comment=ture&id={}&from=singleWeiBo&child_comment_page={}".format(
+                        comment_id, mid, p)
+                    
+                    response = self.session.get(level2)
+                    
+                    html = response.text
+    
+                    json.loads(html)
+                    html = json.loads(html)
+                    html = html['data']['html']
+                    
+                    for uid in re.findall('usercard="id=(\d+)"', html):
+                        self.blockUID(uid, COUNT)
+                        COUNT += 1
+                        n += 1
+                    p += 1
+                
+                
+                
+                
+if __name__ == '__main__':    
+    username = input("Usename: ")  # 用户名
+    password = input("password: ")  # 密码
+    url = input("Weibo Url: ")
+    # cookie_path = r""  # 保存cookie 的文件名称
+    weibo = WeiboLogin(username, password, 
+                       # cookie_path
+                       )
+    weibo.login()
+    weibo.main(url)
+    
+    
+
     
