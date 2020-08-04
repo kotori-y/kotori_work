@@ -53,7 +53,7 @@ def getSimilarity(data, binary=True):
         
         
         
-def main(data):
+def main(data, binary=True):
     """
     
 
@@ -67,7 +67,7 @@ def main(data):
     Similarity matrix.
 
     """
-    simi = getSimilarity(data)
+    simi = getSimilarity(data, binary)
     try:
         simi = np.vstack(simi)
     except:
@@ -78,8 +78,8 @@ def main(data):
         
 
 if "__main__" == __name__:
+    import pandas as pd
     data = np.random.randint(0,2,(1660,1660)) #fake data
-    
     simi = main(data)
 
 
