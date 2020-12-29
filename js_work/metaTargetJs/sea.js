@@ -3,7 +3,7 @@
  * @Author: Kotori Y
  * @Date: 2020-12-28 13:35:26
  * @LastEditors: Kotori Y
- * @LastEditTime: 2020-12-29 14:51:05
+ * @LastEditTime: 2020-12-29 15:00:28
  * @FilePath: \kotori_work\js_work\metaTargetJs\sea.js
  * @AuthorMail: kotori@cbdd.me
  */
@@ -13,14 +13,12 @@
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const request = require("request");
 const cheerio = require("cheerio");
-const qs = require("Qs");
-const { time } = require("console");
 // const fs = require('fs');
 
-let opts = {
-  host: "127.0.0.1",
-  port: 1081,
-};
+// let opts = {
+//   host: "127.0.0.1",
+//   port: 1081,
+// };
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -89,7 +87,7 @@ const getSeaResult = (smiles, callback) => {
       for (var i = 0; i < cols.length; i++) {
         _cols.push(cols.eq(i).text());
       }
-      console.log(_cols);
+    //   console.log(_cols);
 
       for (var a = 0; a < body.length; a++) {
         var temp = {};
@@ -107,6 +105,7 @@ const getSeaResult = (smiles, callback) => {
 
 const fileName = "test.csv";
 getSeaResult("OC(=O)[C@H](N=C(N)N)C", function (err, _cols, _body) {
+  console.log({"headers":_cols})
   if (err) {
     console.log(err);
   } else {
