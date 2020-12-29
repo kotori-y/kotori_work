@@ -130,3 +130,5 @@ dmypy.json
 
 desktop.ini
 *.csv
+
+node_modules/

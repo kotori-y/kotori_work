@@ -8,13 +8,29 @@ import datetime,time,requests,re,random,warnings
 import pandas as pd
 from bs4 import BeautifulSoup
 from collections import OrderedDict  
-# from requests_toolbelt import MultipartEncoder
-import multiprocessing as mp
+from requests_toolbelt import MultipartEncoder
+from functools import wraps
 
 
 """
 THANKS FOR MY FRIEND: CATKIN
 """
+
+def retry(times=5):
+    def dosth(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            attemp = 0
+            while attemp <= times:
+                res = func(*args, **kwargs)
+                if not res.empty:
+                    return res
+                else:
+                    attemp += 1
+                    print(attemp)
+            return res
+        return wrapper
+    return dosth
 
 
 def HitPickV2(smile):
@@ -193,7 +209,7 @@ def SEA(smile):
         r = requests.Session()
         response = r.post(url=start_url, data=data, timeout=60)
         page = r.get(response.url,timeout=60).text
-        while 'This page will periodically referesh to check' in page:
+        while "pending" in page:
             time.sleep(15)
             page = r.get(response.url,timeout=60).text
         df = pd.read_html(page,header=0)[0]
@@ -244,6 +260,7 @@ def TargetHunter(smile):
         df = pd.DataFrame()
     return df
 
+@retry(times=3)
 def PASSonline(smile):
     # http://www.pharmaexpert.ru/passonline/predict.php
     try:
@@ -261,7 +278,7 @@ def PASSonline(smile):
         data = {
             'smi': smile,
             }
-        result_id = r.post(url=resid_url, data=data, headers=header,timeout=60).text.strip()
+        result_id = r.post(url=resid_url, data=data, headers=header,timeout=20).text.strip() 
         pred1_url = 'http://www.pharmaexpert.ru/passonline/pred1.php?id_task='+result_id+'&ots=4'
         page1 = r.get(url=pred1_url,headers=header,timeout=60).text
         while 'automatically updated every 10 seconds' in page1:
@@ -438,9 +455,24 @@ def ChemMapper(smile):
 #         print('Please enter correct mode!')
 #     return status
 
-# if __name__ == '__main__':
-#     warnings.filterwarnings("ignore")
-#     status = True
-#     while status is True:
-#         print(main.__doc__)
-#         status = main(status)
+if __name__ == '__main__':
+    # import pandas as pd
+    from tqdm import tqdm
+    warnings.filterwarnings("ignore")
+    
+    data = pd.read_csv(r"C:\Users\0720\Desktop\MATE\Akuma\1125\ATX_fina_74_1.csv")
+    smis = data.smiles.values
+    
+    out = pd.DataFrame()
+    
+    for smi,idx in tqdm(zip(smis, data["row ID"].values)):
+        res = SEA(smi)
+        res["row ID"] = idx if not data.empty else [idx]
+        out = pd.concat([out, res], axis=0)
+        
+        
+    
+    
+    
+    
+    
