@@ -1,90 +1,131 @@
 /* a part of my blog */
-/* for generating contents of daily front-end*/
-/* pagination component*/
+/* for generating contents of daily front-end */
+/* pagination component */
 
-const itemNumPerPage = 3;
-const dayFilter = document.querySelector("#apply");
+let startDay = 1;
+let currentPage = 1;
+const dayRange = 5;
+const dayNum = 5;
 
-dayFilter.addEventListener("click", function () {
-  document.querySelector(".container-frontend").innerHTML = null;
-  endDay = parseInt(document.getElementById("filterPros").value);
-  render(1, endDay)();
-});
+function render(day) {
+  async function renderTemplate(jsCode, cssCode, title, height) {
+    var temp = document.createElement("div");
+    temp.classList = `containter day${day}`;
 
-function render(day, end) {
-  document.querySelector(".container-frontend").innerHTML = null;
-  function renderTemplate(title, height, jsCode, cssCode) {
-    var aim = document.querySelector(".container-frontend");
-    var temp = document.querySelector("#dailyFrontend");
+    var titleEle = document.createElement("h2");
+    titleEle.innerHTML = `Day ${day}. ${title}`;
 
-    var effect = temp.content.querySelector(".show-effect");
-    var js = temp.content.querySelector(".javascript");
-    var css = temp.content.querySelector(".css");
+    var effectEle = document.createElement("h3");
+    effectEle.innerHTML = "效果";
 
-    temp.content.querySelector(
-      ".container.dayX"
-    ).className = `container dayX day${day}`;
-    temp.content.querySelector("h2").innerText = `Day ${day}. ${title}`;
+    var show = document.createElement("div");
+    show.classList = "show-effect";
+    show.innerHTML = `<iframe align="center" width=100%" height=${height} src="/frontEnd-daily/day${day}/day${day}.html"  frameborder="no" border="0"></iframe>`;
 
-    effect.innerHTML = `<iframe align="center" width=100%" height=${height} src="/frontEnd-daily/day${day}/day${day}.html"  frameborder="no" border="0"></iframe>`;
-    // console.log(jsCode)
-    js.innerHTML = jsCode;
-    css.innerHTML = cssCode;
+    var codeBlock = document.createElement("div");
+    codeBlock.classList = "codeBlock mainCode";
 
-    clone = document.importNode(temp.content, true);
-    aim.appendChild(clone);
-    day++;
+    var jsBlock = document.createElement("div");
+    jsBlock.classList = "js-code";
+    var h3Js = document.createElement("h3");
+    h3Js.innerHTML = "JavaScript";
+    var preJs = document.createElement("pre");
+    preJs.style = "background-color: #d6cbcb";
+    var codeJs = document.createElement("code");
+    codeJs.classList = "javascript";
+    codeJs.innerHTML = jsCode;
+
+    // jsBlock.appendChild(codeJs)
+
+    var cssBlock = document.createElement("div");
+    cssBlock.classList = "css-code";
+    var h3Css = document.createElement("h3");
+    h3Css.innerHTML = "CSS";
+    var preCss = document.createElement("pre");
+    preCss.style = "background-color: rgb(173, 166, 166)"; //
+    var codeCss = document.createElement("code");
+    codeCss.classList = "css";
+    codeCss.innerHTML = cssCode;
+
+    preJs.appendChild(codeJs);
+    jsBlock.appendChild(h3Js);
+    jsBlock.appendChild(preJs);
+
+    preCss.appendChild(codeCss);
+    cssBlock.appendChild(h3Css);
+    cssBlock.appendChild(preCss);
+
+    codeBlock.appendChild(jsBlock);
+    codeBlock.appendChild(cssBlock);
+
+    var note = document.createElement("div");
+    note.classList = "summary-note";
+    var h3Note = document.createElement("h3");
+    h3Note.innerHTML = "小结";
+    note.appendChild(h3Note);
+
+    temp.appendChild(titleEle);
+    temp.appendChild(effectEle);
+    temp.appendChild(show);
+    temp.appendChild(codeBlock);
+    temp.appendChild(note);
+
+    return temp;
   }
 
-  const renderCode = () => {
-    return new Promise(async (resolve, reject) => {
-      var respJS = await fetch(`/frontEnd-daily/day${day}/scriptDay${day}.js`);
-      var js = await respJS.text();
-      console.log(js);
+  async function renderCode() {
+    var respJS = await fetch(`/frontEnd-daily/day${day}/scriptDay${day}.js`);
+    var js = await respJS.text();
 
-      var respCSS = await fetch(`/frontEnd-daily/day${day}/styleDay${day}.css`);
-      var css = await respCSS.text();
-      try {
-        resolve([js, css]);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
-
-  const generatePage = (data) => {
-    return new Promise((resolve) => {
-      renderCode().then((code) => {
-        var title = data[day]["title"];
-        var height = data[day]["height"];
-        renderTemplate(title, height, code[0], code[1]);
-        if (day <= end) {
-          resolve(generatePage(data));
-        } else {
-          resolve();
-        }
-      });
-    });
-  };
-
-  function render() {
-    $.getJSON("/frontEnd-daily/dayDate.json", function (data) {
-      generatePage(data).then(function () {
-        console.log(123);
-        document.querySelectorAll("code").forEach((block) => {
-          // then highlight each
-          hljs.highlightBlock(block);
-          console.log(456);
-        });
-      });
-    });
+    var respCSS = await fetch(`/frontEnd-daily/day${day}/styleDay${day}.css`);
+    var css = await respCSS.text();
+    try {
+      return [js, css];
+    } catch (error) {
+      alert(error);
+    }
   }
-  return render;
+
+  async function renderItem(data) {
+    var title = data[day]["title"];
+    var height = data[day]["height"];
+    var code = await renderCode();
+    var temp = await renderTemplate(code[0], code[1], title, height);
+    console.log(temp);
+    return temp;
+  }
+  return renderItem;
 }
 
-function renderPagniation(itemNum) {
-  var pageNum = Math.ceil(itemNum / itemNumPerPage);
-  var next = document.querySelector(".page-item.prev");
+async function generatePage(startDay, dayRange) {
+  var aim = document.querySelector(".container-frontend");
+
+  $(".container-frontend")
+    .children()
+    .slideUp(500, function () {
+      $(this).remove();
+    });
+
+  $.getJSON("/frontEnd-daily/dayDate.json", async function (data) {
+    var promise = [];
+    for (let day = startDay; day <= startDay + dayRange - 1; day++) {
+      promise.push(render(day)(data));
+    }
+
+    temps = await Promise.all(promise);
+    temps.forEach((temp) => aim.append(temp));
+    document.querySelectorAll("code").forEach((block) => {
+      hljs.highlightBlock(block);
+    });
+  });
+}
+
+// const currentPage = 1
+
+function renderPagniation() {
+  var currentPage = 1;
+  var pageNum = Math.ceil(dayNum / dayRange);
+  var prev = document.querySelector(".page-item.prev");
   var next = document.querySelector(".page-item.next");
   var pagination = document.querySelector(".pagination");
 
@@ -95,19 +136,43 @@ function renderPagniation(itemNum) {
     button.innerHTML = page;
     pagination.insertBefore(button, next);
   }
-
   var pages = document.querySelectorAll(".page-item.num");
+
+  function update() {
+    pages.forEach((ele) => ele.classList.remove("active"));
+    pages[currentPage - 1].classList.add("active");
+    var left = (currentPage - 1) * dayRange + 1;
+    var right = left + dayRange - 1;
+    console.log(right);
+    right = right <= dayNum ? dayRange : dayRange - (right - dayNum);
+    prev.disabled = currentPage === 1;
+    next.disabled = currentPage === pages.length;
+    console.log([left, right]);
+    generatePage(left, right);
+    window.scrollTo(0, 0);
+  }
+
   pages.forEach((ele) => {
     ele.addEventListener("click", function () {
-      var num = parseInt(ele.innerHTML);
-      var left = (num - 1) * 3 + 1;
-      var right = left + 2;
-      right = right <= itemNum ? right : itemNum;
-      render(left, right)();
-      window.scrollTo(0, 0);
+      currentPage = parseInt(ele.innerHTML);
+      update();
     });
+  });
+
+  prev.addEventListener("click", function () {
+    currentPage--;
+    currentPage = currentPage < 1 ? 1 : currentPage;
+    update();
+  });
+
+  next.addEventListener("click", function () {
+    currentPage++;
+    currentPage = currentPage > pages.length ? pages.length : currentPage;
+    update();
   });
 }
 
-render(1, itemNumPerPage)();
-renderPagniation(5);
+(() => {
+  generatePage(1, dayRange);
+  renderPagniation();
+})();
