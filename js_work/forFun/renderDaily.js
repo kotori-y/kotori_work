@@ -1,10 +1,10 @@
 /* a part of my blog */
-/* for generating contents of daily front-end */
+/* for generating contents of daily front-end*/
 /* pagination component */
 
 let startDay = 1;
 let currentPage = 1;
-const dayRange = 5;
+const dayRange = 3;
 const dayNum = 5;
 
 function render(day) {
@@ -91,7 +91,7 @@ function render(day) {
     var height = data[day]["height"];
     var code = await renderCode();
     var temp = await renderTemplate(code[0], code[1], title, height);
-    console.log(temp);
+    // console.log(temp);
     return temp;
   }
   return renderItem;
@@ -106,17 +106,16 @@ async function generatePage(startDay, dayRange) {
       $(this).remove();
     });
 
-  $.getJSON("/frontEnd-daily/dayDate.json", async function (data) {
-    var promise = [];
-    for (let day = startDay; day <= startDay + dayRange - 1; day++) {
-      promise.push(render(day)(data));
-    }
+  data = await $.getJSON("/frontEnd-daily/dayDate.json");
+  var promise = [];
+  for (let day = startDay; day <= startDay + dayRange - 1; day++) {
+    promise.push(render(day)(data));
+  }
 
-    temps = await Promise.all(promise);
-    temps.forEach((temp) => aim.append(temp));
-    document.querySelectorAll("code").forEach((block) => {
-      hljs.highlightBlock(block);
-    });
+  temps = await Promise.all(promise);
+  temps.forEach((temp) => aim.append(temp));
+  document.querySelectorAll("code").forEach((block) => {
+    hljs.highlightBlock(block);
   });
 }
 
