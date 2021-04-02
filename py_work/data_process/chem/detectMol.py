@@ -3,7 +3,7 @@ Description: the script detect the composition of molecules
 Author: Kotori Y
 Date: 2021-04-02 17:11:21
 LastEditors: Kotori Y
-LastEditTime: 2021-04-02 17:19:59
+LastEditTime: 2021-04-02 17:28:39
 FilePath: \kotori_work\py_work\data_process\chem\detectMol.py
 AuthorMail: kotori@cbdd.me
 '''
@@ -28,7 +28,7 @@ def detectMoleculeComposition(mol, elements=[6, 7, 8]):
     nAtoms = mol.GetNumAtoms()
 
     elements = [f"#{elem}" for elem in elements]
-    smarts = f"[!*,{','.join(elements)}]"
+    smarts = f"[{','.join(elements)}]"
 
     patt = Chem.MolFromSmarts(smarts)
     detectNum = mol.GetSubstructMatches(patt)
