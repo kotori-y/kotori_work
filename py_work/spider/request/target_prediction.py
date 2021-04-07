@@ -370,6 +370,7 @@ def targetNet(smile: str, finger_type: str) -> pd.DataFrame:
 
 #"BaseInfo_ecfp4" 
 def targetNetFile(path_to_file: str, finger_type: str) -> pd.DataFrame:
+    url = "http://targetnet.scbdd.com/calcnet/calc_ensemble_list/"
     with open(path_to_file, 'rb') as f:
         data = {
             "tempfile": ("my_file.smi", f, "application/octet-stream"),
