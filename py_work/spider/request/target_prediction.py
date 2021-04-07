@@ -354,6 +354,35 @@ def ChemMapper(smile):
         df = pd.DataFrame()
     return df
 
+
+def targetNet(smile: str, finger_type: str) -> pd.DataFrame:
+    url = "http://targetnet.scbdd.com/calcnet/calc_ensemble_text/"
+    data = {
+        "smile": (None, smile),
+        "finger_type": (None, finger_type)
+    }
+    try:
+        resp = requests.post(url, data = data)
+        out = pd.read_html(resp.text)[0]
+    except Exception:
+        out = pd.DataFrame()
+    return out
+
+#"BaseInfo_ecfp4" 
+def targetNetFile(path_to_file: str, finger_type: str) -> pd.DataFrame:
+    with open(path_to_file, 'rb') as f:
+        data = {
+            "tempfile": ("my_file.smi", f, "application/octet-stream"),
+            "finger_type_list": (None, "finger_type)
+        }
+        try:
+            resp = requests.post(url, files = data)
+            out = pd.read_html(resp.text)[0]
+        except Exception:
+            out = pd.DataFrame()
+    
+    return out
+
 # def main(status):
 #     '''
 #     Please Enter the number to choose mode:
