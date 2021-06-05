@@ -3,7 +3,7 @@
  * @Author: Kotori Y
  * @Date: 2021-06-05 16:33:14
  * @LastEditors: Kotori Y
- * @LastEditTime: 2021-06-05 16:33:15
+ * @LastEditTime: 2021-06-05 20:51:54
  * @FilePath: \ddiDatabase0603\widget.js
  * @AuthorMail: kotori@cbdd.me
  */
@@ -13,11 +13,18 @@ document.getElementById("colorMap").value =
 
 document.querySelector("#hidden").addEventListener("click", () => {
   document.querySelector(".container").style.display = "none";
-  alert("Pressing Key D to display color config area!");
+  alert("Pressing Key D to display color config area again!");
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.code === "KeyD") {
-    document.querySelector(".container").style.display = "block";
+  switch (e.code) {
+    case "KeyD":
+      document.querySelector(".container").style.display = "block";
+      break;
+    case "KeyH":
+      document.querySelector(".container").style.display = "none";
+      break;
+    default:
+      break;
   }
 });

@@ -1,7 +1,24 @@
+function isNumeric(str) {
+  if (typeof str != "string") return false; // we only process strings!
+  return (
+    !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    !isNaN(parseFloat(str)) &&
+    parseFloat(str) > 0
+  ); // ...and ensure strings of whitespace fail
+}
+
 function show() {
   document.querySelector("svg").innerHTML = "";
   const colors = document.getElementById("colorMap").value.trim().split(/\s+/);
-  const scale = parseFloat(document.getElementById("scale").value.trim());
+  let scale = document.getElementById("scale").value.trim();
+
+  if (!isNumeric(scale)) {
+    console.log(scale);
+    alert("invalid input of scaled ratio!");
+    return;
+  }
+
+  scale = parseFloat(scale);
   var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
@@ -17,6 +34,7 @@ function show() {
     .align(0);
 
   var y = d3.scaleRadial().range([innerRadius, outerRadius]);
+  console.log(y);
 
   //   var z = d3
   //     .scaleOrdinal()
@@ -78,6 +96,34 @@ function show() {
       ]);
       z.domain(data.columns.slice(2));
 
+      const hashed = new Map();
+      for (let i = 0; i < data.length; i++) {
+        let c = data[i].firstLevel;
+        c = c === "U" ? "" : c;
+        hashed.set(c, (hashed.get(c) | 0) + 1);
+      }
+
+      flag = "";
+      let tem = 0;
+      for (let j = 0; j < data.length - 2; j++) {
+        let c = data[j].firstLevel;
+        c = c === "U" ? "" : c;
+        const n =
+          hashed.get(c) % 2 === 1
+            ? (hashed.get(c) + 1) / 2
+            : Math.ceil(hashed.get(c) / 2);
+        if (c && c !== flag) {
+          // console.log(c);
+          tem = 0;
+          flag = c;
+        }
+        if (tem !== n - 1) {
+          c = "";
+        }
+        data[j].flag = c;
+        tem++;
+      }
+
       var label = g
         .append("g")
         .selectAll("g")
@@ -102,10 +148,27 @@ function show() {
 
       label
         .append("text")
-        .attr("transform", "translate(-18, 4)")
+        .attr("transform", function (d) {
+          return x(d.secondLevel) + x.bandwidth() / 2 + Math.PI / 2 < 4.92
+            ? "rotate(0)translate(-18, 4)"
+            : "rotate(180)translate(18, 4)";
+        })
         .text(function (d) {
           return d.secondLevel.match(/U\d/) ? "" : d.secondLevel;
         });
+
+      label
+        .append("text")
+        .attr("transform", function (d) {
+          return x(d.secondLevel) + x.bandwidth() / 2 + Math.PI / 2 < 4.92
+            ? "rotate(0)translate(-50, 1)"
+            : "rotate(180)translate(50, 1)";
+        })
+        .text(function (d) {
+          return d.flag;
+        })
+        .attr("font-size", "14px")
+        .attr("fill", "grey");
 
       var yAxis = g.append("g").attr("text-anchor", "middle");
 
@@ -167,48 +230,23 @@ function show() {
         })
         .attr("stroke-width", "0.5");
 
-      const dial = [];
-      const hashed = new Map();
-      for (let i = 0; i < data.length - 2; i++) {
-        let c = data[i].firstLevel;
-        c = c === "U" ? "" : c;
-        hashed.set(c, (hashed.get(c) | 0) + 1);
-      }
-
-      flag = "";
-      for (let j = 0; j < data.length - 2; j++) {
-        let c = data[j].firstLevel;
-        c = c === "U" ? "" : c;
-        // console.log(c);
-        if (c && c !== flag) {
-          // console.log(c);
-          temp = 0;
-          flag = c;
-        }
-        if (temp !== ((hashed.get(c) / 2) | 0) - 1) {
-          c = "";
-        }
-        dial.push(c);
-        temp++;
-      }
-
-      yTick
-        .selectAll("text")
-        .data(dial)
-        .enter()
-        .append("text")
-        .attr("x", 130)
-        // tweak digit Y position a little to ensure it's centred at desired position
-        .attr("y", "0.4em")
-        .attr("font-size", "14px")
-        .attr("fill", "grey")
-        .attr("font-family", "italic")
-        .text(function (d, i) {
-          return d;
-        })
-        .attr("transform", function (d, i) {
-          return "rotate(" + (-90 + (360 / dial.length) * i) + ")";
-        });
+      //   yTick
+      //     .selectAll("text")
+      //     .data(dial)
+      //     .enter()
+      //     .append("text")
+      //     .attr("x", 130)
+      //     // tweak digit Y position a little to ensure it's centred at desired position
+      //     .attr("y", "0.4em")
+      //   .attr("font-size", "14px")
+      //   .attr("fill", "grey")
+      //     .attr("font-family", "italic")
+      //     .text(function (d, i) {
+      //       return d;
+      //     })
+      //     .attr("transform", function (d, i) {
+      //       return "rotate(" + (-90 + (360 / dial.length) * i) + ")";
+      //     });
 
       var legend = g
         .append("g")
