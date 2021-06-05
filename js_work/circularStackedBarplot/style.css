@@ -1,0 +1,15 @@
+.container {
+  position: absolute;
+  top: 0;
+  right: 10px;
+}
+
+#colorMap,
+#scale {
+  width: 100px;
+  resize: none;
+}
+
+#colorMap {
+  height: 200px;
+}
