@@ -129,6 +129,6 @@ dmypy.json
 .pyre/
 
 desktop.ini
-*.csv
+test.csv
 
 node_modules/
