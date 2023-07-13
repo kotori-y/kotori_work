@@ -10,7 +10,7 @@ def get_MMFF_atom_poses(mol, numConfs=None, return_energy=False):
         Chem.EmbedMultipleConfs(new_mol, numConfs=numConfs)
         # MMFF generates multiple conformations
         res = Chem.MMFFOptimizeMoleculeConfs(new_mol)
-        res = [x for x in res if x[0] == 0]
+        res = [[x[0], x[1] if not x[0] else np.Inf] for x in res]
         new_mol = Chem.RemoveHs(new_mol)
         index = np.argmin([x[1] for x in res])
         energy = res[index][1]
@@ -32,4 +32,4 @@ if __name__ == "__main__":
     smiles = "NS(=O)(=O)c1cc2c(cc1Cl)NC(CSCc1ccccc1)=NS2(=O)=O"
     mol = Chem.MolFromSmiles(smiles)
 
-    get_MMFF_atom_poses(mol, numConfs=3, return_energy=False)
+    get_MMFF_atom_poses(mol, numConfs=10, return_energy=False)
