@@ -39,7 +39,7 @@ class Draw(object):
         print('------------------------------')
         print('Drawing Hist Plot')
         aver = self.aver.sort_values()
-        aver = aver[:top]
+        aver = aver[-top:]
         f,ax = plt.subplots(figsize=(5*0.618,5))
         for x,y in zip(range(len(aver)), aver.values):
             ax.barh(x,y,color='#1E88E5') 
@@ -63,7 +63,7 @@ class Draw(object):
     def draw_scatter(self,label,savedir=None,**kwgs):
         print('------------------------------')
         print('>>> Drawing Scatter Plot')
-        ori_data = self.ori_data.drop('Label',axis=1)
+        ori_data = self.ori_data.drop('y_true',axis=1)
         shap_data = self.shap_data.iloc[:,:-2]
         f,ax = plt.subplots()
         font_kws = {'size':8}
@@ -131,7 +131,7 @@ class Draw(object):
                         max_display=top,
                        feature_names=cols)
         if savedir:
-            plt.savefig(savedir,kwargs)
+            plt.savefig(savedir)
         else:
             pass
         plt.show()
@@ -142,11 +142,11 @@ class Draw(object):
         print('------------------------------')
         print('>>> Drawing Force Plot...')
         val = self.shap_data.iloc[idx,:]
-        shap.force_plot(val.Baseline, val[:-2].values,
+        shap.force_plot(val.base_line, val[:-2].values,
                         self.ori_data.loc[idx,cols].apply(lambda x: '%.0f'%x),
                         matplotlib=True,show=False)
         if savedir:
-            plt.savefig(savedir,kwargs)
+            plt.savefig(savedir)
         else:
             pass
         plt.show()

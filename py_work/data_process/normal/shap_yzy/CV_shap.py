@@ -14,7 +14,7 @@ Created on Wed Oct 16 20:57:12 2019
 
 import shap
 import pandas as pd
-from xgboost import XGBClassifier
+from xgboost import XGBClassifier, XGBRegressor
 from sklearn.model_selection import KFold
 from load import load
 
@@ -33,21 +33,17 @@ class CV_shap(object):
         self.data = self.data.loc[:,features]
         self.data['Label'] = list(label)
         
-    def _build_model(self,X_train,y_train,
-                    n_estimators=150,
-                    learning_rate=0.2,
-                    max_depth=6,
-                    subsample=1):
+    def _build_model(self,X_train,y_train):
         """
         """
         print('>>>Fitting')
-        model = XGBClassifier(n_estimators=n_estimators,
-                              learning_rate=learning_rate,
-                              max_depth=max_depth,
-                              subsample=subsample,
+        model = XGBRegressor(n_estimators=1000,
+                              learning_rate=0.02,
+                              max_depth=6,
+                              subsample=0.8,
                               nthread=self.nthread)
         
-        model.fit(X_train,y_train)
+        model.fit(X_train, y_train)
         return model
     
     def _get_shap(self,model,X_test):
