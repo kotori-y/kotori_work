@@ -7,7 +7,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import time
 import random
 
@@ -45,33 +45,42 @@ class BrendaSpider:
         self.driver.find_element(By.CSS_SELECTOR, selector).send_keys(keys)
 
     def search(self, ec_number):
-        tgt_url = f"https://www.brenda-enzymes.org/enzyme.php?ecno={ec_number}#kcat/KM%20VALUE%20[1/mMs%3Csup%3E-1%3C/sup%3E]"
-        self.driver.get(tgt_url)
+        try:
+            tgt_url = f"https://www.brenda-enzymes.org/enzyme.php?ecno={ec_number}#kcat/KM%20VALUE%20[1/mMs%3Csup%3E-1%3C/sup%3E]"
+            self.driver.get(tgt_url)
+        except TimeoutException:
+            return False
 
         wrapper = ".flat-wrapper"
         unfold_btn = "#tab305_se"
+        table_elem = "#tab305_head"
 
         self.wait(wrapper)
         if 'Error 404 - Enzyme not found!' in self.driver.page_source:
             return False
 
         try:
-            self.wait(unfold_btn)
-            self.click(unfold_btn)
-            return True
+            self.wait(table_elem)
+
+            try:
+                self.click(unfold_btn)
+            except NoSuchElementException:
+                ...
+            finally:
+                return True
+
         except TimeoutException:
             return False
 
     def analysis_page(self):
-        def foobar(tmp_list):
-            return ','.join([x.strip() for x in tmp_list])
-
         html = self.driver.page_source
         tree = etree.HTML(html)
 
         values = tree.xpath('//*[@id="tab305"]/div[contains(@class, "row")]//div[1]//span/text()')
         substrate = tree.xpath('//*[@id="tab305"]/div[contains(@class, "row")]//div[2]//span/text()')
-        organism = tree.xpath('//*[@id="tab305"]/div[contains(@class, "row")]//div[3]//span/a/text()')
+
+        organism_rows = tree.xpath('//*[@id="tab305"]/div[contains(@class, "row")]//div[3]//span')
+        organism = [x.xpath('string(.)') for x in organism_rows]
 
         uniprot_rows = tree.xpath('//*[@id="tab305"]/div[contains(@class, "row")]//div[4]//span')
         uniprot = [x.xpath('string(.)') for x in uniprot_rows]
@@ -79,8 +88,8 @@ class BrendaSpider:
         commentary = tree.xpath('//*[@id="tab305"]/div[contains(@class, "row")]//div[5]//span/text()')
 
         return {
-            'values': values[:len(organism)],
-            'substrate': substrate[:len(organism)],
+            'values': values,
+            'substrate': substrate,
             'organism': organism,
             'uniprot': uniprot,
             'commentary': commentary
@@ -96,12 +105,12 @@ class BrendaSpider:
 if __name__ == "__main__":
     demo = BrendaSpider()
 
-    for ec_number_ in ["7.1.1.8", "1.1.1.1", "10.5.1.1", "1.1.1.2"]:
+    for ec_number_ in ["1.1.1.307"]:
         out = pd.DataFrame(demo.run(ec_number_))
         if not out.empty:
             out = out.applymap(lambda x: x.strip()).applymap(lambda x: None if x == "-" else x)
             out.insert(0, 'ec_number', ec_number_)
             out.to_csv(fr'E:\Mate\wjj\0307\{ec_number_}.txt', sep="\t", index=False)
         demo.driver.get('about:blank')
-        time.sleep(1)
+        time.sleep(0.5)
     # print(pd.DataFrame(ans_))
