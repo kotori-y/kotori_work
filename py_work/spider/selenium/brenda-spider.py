@@ -88,7 +88,7 @@ class BrendaSpider:
         commentary = tree.xpath('//*[@id="tab305"]/div[contains(@class, "row")]//div[5]//span/text()')
 
         return {
-            'values': values,
+            'values': values[:len(organism)],
             'substrate': substrate,
             'organism': organism,
             'uniprot': uniprot,
@@ -105,7 +105,7 @@ class BrendaSpider:
 if __name__ == "__main__":
     demo = BrendaSpider()
 
-    for ec_number_ in ["1.1.1.307"]:
+    for ec_number_ in ["1.1.1.382"]:
         out = pd.DataFrame(demo.run(ec_number_))
         if not out.empty:
             out = out.applymap(lambda x: x.strip()).applymap(lambda x: None if x == "-" else x)
